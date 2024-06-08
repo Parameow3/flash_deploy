@@ -183,7 +183,7 @@ def get_podcast_by_id(podcast_id):
     if podcast.empty:
         return jsonify({'error': 'Podcast not found'}), 404
 
-    podcast_details = podcast[['anime_id', 'Name', 'Genres', 'Type', 'Aired', 'Producers', 'Studios', 'Source', 'Duration', 'Rating']].to_dict(orient='records')[0]
+    podcast_details = podcast.to_dict(orient='records')[0]
 
     return jsonify(podcast_details)
 
