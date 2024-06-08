@@ -11,7 +11,6 @@ podcast_data = pd.read_csv("data/anime.csv")
 # Create a user-item matrix in sparse format
 user_podcast_matrix = csr_matrix((data['rating'], (data['user_id'], data['anime_id'])))
 
-
 class Recommender:
     def __init__(self, user_podcast_matrix, n_neighbors=10):
         self.user_podcast_matrix = user_podcast_matrix
@@ -115,13 +114,13 @@ def liked_podcasts():
 
 
 # Get podcasts by studios with optional randomization
-@app.route('/podcasts/studios/<string:studio_name>', methods=['GET'])
-def get_podcasts_by_studio(studio_name):
+@app.route('/podcasts/producer/<string:producer_name>', methods=['GET'])
+def get_podcasts_by_studio(producer_name):
     page = int(request.args.get('page', 1))
     per_page = int(request.args.get('per_page', 10))
     randomize = request.args.get('random', 'false').lower() == 'true'
 
-    filtered_df = podcast_data[podcast_data['Studios'].astype(str).str.contains(studio_name, case=False, na=False)]
+    filtered_df = podcast_data[podcast_data['Producers'].astype(str).str.contains(producer_name, case=False, na=False)]
 
     if randomize:
         filtered_df = filtered_df.sample(frac=1).reset_index(drop=True)
@@ -130,14 +129,7 @@ def get_podcasts_by_studio(studio_name):
 
     result = paginated_df.to_dict(orient='records')
 
-    response = {
-        'page': page,
-        'per_page': per_page,
-        'total': total,
-        'data': result
-    }
-
-    return jsonify(response)
+    return jsonify(result)
 
 
 # Get podcasts with optional randomization
@@ -180,14 +172,20 @@ def get_podcasts_by_genre(genre_name):
 
     result = paginated_df.to_dict(orient='records')
 
-    response = {
-        'page': page,
-        'per_page': per_page,
-        'total': total,
-        'data': result
-    }
+    return jsonify(result)
 
-    return jsonify(response)
+
+# Get podcast by ID
+@app.route('/podcast/<int:podcast_id>', methods=['GET'])
+def get_podcast_by_id(podcast_id):
+    podcast = podcast_data[podcast_data['anime_id'] == podcast_id]
+
+    if podcast.empty:
+        return jsonify({'error': 'Podcast not found'}), 404
+
+    podcast_details = podcast[['anime_id', 'Name', 'Genres', 'Type', 'Aired', 'Producers', 'Studios', 'Source', 'Duration', 'Rating']].to_dict(orient='records')[0]
+
+    return jsonify(podcast_details)
 
 
 if __name__ == '__main__':
